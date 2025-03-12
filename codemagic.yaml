@@ -1,29 +1,32 @@
 workflows:
   ios-workflow:
-    name: iOS Build
-    instance_type: mac_mini_m1  # Pakai Mac M1 (karena iOS butuh macOS)
-    max_build_duration: 120
+    name: iOS Workflow
+    instance_type: mac_mini_m1
+    max_build_duration: 60
     environment:
       flutter: stable
       xcode: latest
       cocoapods: default
-      vars:
-        BUNDLE_ID: "com.example.yourapp"
     scripts:
-      - name: Checkout repository
+      - name: Set up Flutter
         script: |
-          git clone $CM_REPO_URL .
-          git checkout $CM_BRANCH
-      - name: Install Flutter dependencies
+          flutter packages pub get
+          flutter clean
+      
+      - name: Install CocoaPods dependencies
         script: |
-          flutter pub get
-      - name: Build iOS App (No Codesign)
+          cd ios
+          pod install --repo-update
+      
+      - name: Build iOS app
         script: |
-          flutter build ios --no-codesign
+          flutter build ios --release --no-codesign
     artifacts:
-      - build/ios/iphoneos/*.app
-      - build/ios/iphoneos/*.ipa
+      - build/ios/iphoneos/Runner.app
+      - build/**/outputs/**/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
     publishing:
       email:
         recipients:
-          - "herman.sama52@gmail.com"
+          - your-email@example.com
