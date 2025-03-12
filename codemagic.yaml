@@ -18,8 +18,25 @@ workflows:
         script: |
           # Perbaiki Podfile dengan mengubah **FILE** menjadi __FILE__
           sed -i '' 's/\*\*FILE\*\*/__FILE__/g' ios/Podfile
+          
+          # Buat script Ruby untuk memperbaiki flutter_root path
+          cat > ios/fix_podfile.rb << 'EOFRUBY'
+          #!/usr/bin/env ruby
+          podfile_content = File.read('Podfile')
+          flutter_path = `which flutter`.strip
+          flutter_bin_dir = File.dirname(flutter_path)
+          flutter_root = File.dirname(flutter_bin_dir)
+          new_content = podfile_content.gsub(/def flutter_root.*?end/m, "def flutter_root\n  \"#{flutter_root}\"\nend")
+          File.write('Podfile', new_content)
+          puts "Fixed Podfile with flutter_root: #{flutter_root}"
+          EOFRUBY
+          
+          # Jalankan script Ruby untuk memperbaiki Podfile
+          cd ios
+          ruby fix_podfile.rb
+          
           echo "Podfile setelah perbaikan:"
-          cat ios/Podfile
+          cat Podfile
           
       - name: Install CocoaPods dependencies
         script: |
@@ -55,4 +72,4 @@ workflows:
     publishing:
       email:
         recipients:
-          - herman.sama52@gmail.com
+          - your-email@example.com  # Ganti dengan email Anda
