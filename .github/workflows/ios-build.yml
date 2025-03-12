@@ -1,5 +1,4 @@
 name: iOS Build
-
 on:
   push:
     branches:
@@ -7,37 +6,34 @@ on:
   pull_request:
     branches:
       - main
-
 jobs:
   build:
     runs-on: macos-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
+      
       - name: Setup Xcode
         run: sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
-
+      
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.27.2'
-
+          
       - name: Install Dependencies
         run: flutter pub get
-
-      - name: Initialize Podfile (if not exists)
+      
+      - name: Setup CocoaPods
         run: |
-          cd ios
-          [ -f Podfile ] || flutter build ios --no-codesign
-          cd ..
-
+          gem install cocoapods
+          pod --version
+      
       - name: Install CocoaPods Dependencies
         run: |
           cd ios
-          pod install --clean-install
+          pod install --repo-update
           cd ..
-
+      
       - name: Build iOS App (Without Signing)
         run: flutter build ios --no-codesign
