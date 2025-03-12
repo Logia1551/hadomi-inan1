@@ -12,13 +12,14 @@ workflows:
         script: |
           flutter pub get
           mkdir -p ios/Flutter
+          mkdir -p assets/images
           
-      - name: Fix Podfile with Ruby
+      - name: Fix Podfile
         script: |
-          cd ios
-          chmod +x fix_podfile.rb
-          ruby fix_podfile.rb
-          cat Podfile
+          # Perbaiki Podfile dengan mengubah **FILE** menjadi __FILE__
+          sed -i '' 's/\*\*FILE\*\*/__FILE__/g' ios/Podfile
+          echo "Podfile setelah perbaikan:"
+          cat ios/Podfile
           
       - name: Install CocoaPods dependencies
         script: |
@@ -27,9 +28,31 @@ workflows:
           
       - name: Build iOS app
         script: |
+          # Build iOS app dengan flag no-tree-shake-icons
           flutter build ios --release --no-codesign --no-tree-shake-icons
+          
+      - name: Create IPA file
+        script: |
+          # Buat struktur direktori Payload
+          cd build/ios/iphoneos
+          mkdir -p Payload
+          cp -R Runner.app Payload/
+          
+          # Arsipkan sebagai IPA
+          zip -r Runner.ipa Payload
+          
+          # Pindahkan ke lokasi yang mudah diakses
+          mkdir -p ../../ipa
+          cp Runner.ipa ../../ipa/
+          
+          echo "IPA file created at build/ios/ipa/Runner.ipa"
+          
     artifacts:
+      - build/ios/ipa/*.ipa
       - build/ios/iphoneos/Runner.app
-      - build/**/outputs/**/*.ipa
       - /tmp/xcodebuild_logs/*.log
       - flutter_drive.log
+    publishing:
+      email:
+        recipients:
+          - herman.sama52@gmail.com
