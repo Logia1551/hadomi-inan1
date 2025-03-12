@@ -10,14 +10,20 @@ workflows:
     scripts:
       - name: Set up Flutter
         script: |
-          flutter packages pub get
-          flutter clean
-      
+          # Pastikan flutter pub get dijalankan dengan benar
+          flutter pub get
+          # Verifikasi struktur file
+          ls -la ios/
+          ls -la ios/Flutter/ || mkdir -p ios/Flutter/
+          
       - name: Install CocoaPods dependencies
         script: |
+          # Pastikan flutter pub get dijalankan kembali untuk menghasilkan file konfigurasi
+          flutter pub get
+          # Kemudian baru masuk ke direktori iOS untuk pod install
           cd ios
           pod install --repo-update
-      
+          
       - name: Build iOS app
         script: |
           flutter build ios --release --no-codesign
