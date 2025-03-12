@@ -12,14 +12,18 @@ workflows:
         script: |
           # Pastikan flutter pub get dijalankan dengan benar
           flutter pub get
-          # Verifikasi struktur file
+          # Verifikasi dan buat direktori yang dibutuhkan
           ls -la ios/
-          ls -la ios/Flutter/ || mkdir -p ios/Flutter/
+          mkdir -p ios/Flutter/
+          # Pastikan Generated.xcconfig dibuat
+          test -f ios/Flutter/Generated.xcconfig || flutter pub get
           
       - name: Install CocoaPods dependencies
         script: |
           # Pastikan flutter pub get dijalankan kembali untuk menghasilkan file konfigurasi
           flutter pub get
+          # Verifikasi isi Podfile sebelum pod install
+          cat ios/Podfile
           # Kemudian baru masuk ke direktori iOS untuk pod install
           cd ios
           pod install --repo-update
@@ -35,4 +39,4 @@ workflows:
     publishing:
       email:
         recipients:
-          - your-email@example.com
+          - herman.sama52@gmail.com

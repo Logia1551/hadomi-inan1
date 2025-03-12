@@ -1,42 +1,3 @@
-workflows:
-  ios-workflow:
-    name: iOS Workflow
-    instance_type: mac_mini_m1
-    max_build_duration: 60
-    environment:
-      flutter: stable
-      xcode: latest
-      cocoapods: default
-    scripts:
-      - name: Set up Flutter
-        script: |
-          flutter pub get
-          mkdir -p ios/Flutter
-          
-      - name: Fix Podfile with Ruby
-        script: |
-          # Buat script Ruby untuk memperbaiki Podfile secara dinamis
-          cat > ios/fix_podfile.rb << 'EOL'
-#!/usr/bin/env ruby
-# Ambil FLUTTER_ROOT dari Generated.xcconfig
-flutter_root = nil
-xcconfig_path = File.join(Dir.pwd, '..', 'Flutter', 'Generated.xcconfig')
-if File.exist?(xcconfig_path)
-  File.foreach(xcconfig_path) do |line|
-    if matches = line.match(/FLUTTER_ROOT\=(.*)/)
-      flutter_root = matches[1].strip
-      puts "Found FLUTTER_ROOT: #{flutter_root}"
-      break
-    end
-  end
-end
-unless flutter_root
-  puts "FLUTTER_ROOT tidak ditemukan di Generated.xcconfig, menggunakan nilai default"
-  flutter_root = `flutter --version --machine | grep flutterRoot | cut -d'"' -f4`.strip
-  puts "Using Flutter root: #{flutter_root}"
-end
-# Buat Podfile baru
-podfile_content = <<-EOT
 # Uncomment this line to define a global platform for your project
 platform :ios, '13.0'
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
@@ -46,9 +7,16 @@ project 'Runner', {
   'Profile' => :release,
   'Release' => :release,
 }
-# Definisi flutter_root langsung dengan nilai yang diperoleh
 def flutter_root
-  "#{flutter_root}"
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
+  end
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
 end
 require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
 flutter_ios_podfile_setup
@@ -65,31 +33,3 @@ post_install do |installer|
     end
   end
 end
-EOT
-# Tulis ke file
-File.write('Podfile', podfile_content)
-puts "Podfile baru telah dibuat dengan FLUTTER_ROOT: #{flutter_root}"
-EOL
-          cd ios
-          ruby fix_podfile.rb
-          echo "Isi Podfile setelah perbaikan:"
-          cat Podfile
-          
-      - name: Install CocoaPods dependencies
-        script: |
-          flutter pub get
-          cd ios
-          pod install --repo-update
-          
-      - name: Build iOS app
-        script: |
-          flutter build ios --release --no-codesign
-    artifacts:
-      - build/ios/iphoneos/Runner.app
-      - build/**/outputs/**/*.ipa
-      - /tmp/xcodebuild_logs/*.log
-      - flutter_drive.log
-    publishing:
-      email:
-        recipients:
-          - herman.sama52@gmail.com
