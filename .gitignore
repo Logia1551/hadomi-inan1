@@ -1,0 +1,13 @@
+# Ignore build files
+build/
+.dart_tool/
+.gradle/
+.idea/
+.vscode/
+pubspec.lock
+Pods/
+.symlinks/
+.DS_Store
+xcuserdata/
+DerivedData/
+*.xcworkspace/
