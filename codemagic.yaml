@@ -10,21 +10,18 @@ workflows:
     scripts:
       - name: Set up Flutter
         script: |
-          # Pastikan flutter pub get dijalankan dengan benar
           flutter pub get
-          # Verifikasi dan buat direktori yang dibutuhkan
-          ls -la ios/
-          mkdir -p ios/Flutter/
-          # Pastikan Generated.xcconfig dibuat
-          test -f ios/Flutter/Generated.xcconfig || flutter pub get
+          mkdir -p ios/Flutter
+          
+      - name: Fix Podfile with Ruby
+        script: |
+          cd ios
+          chmod +x fix_podfile.rb
+          ruby fix_podfile.rb
+          cat Podfile
           
       - name: Install CocoaPods dependencies
         script: |
-          # Pastikan flutter pub get dijalankan kembali untuk menghasilkan file konfigurasi
-          flutter pub get
-          # Verifikasi isi Podfile sebelum pod install
-          cat ios/Podfile
-          # Kemudian baru masuk ke direktori iOS untuk pod install
           cd ios
           pod install --repo-update
           
@@ -36,7 +33,3 @@ workflows:
       - build/**/outputs/**/*.ipa
       - /tmp/xcodebuild_logs/*.log
       - flutter_drive.log
-    publishing:
-      email:
-        recipients:
-          - herman.sama52@gmail.com
